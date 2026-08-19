@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>极简工作台 Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        /* ========== 全局CSS变量（支持主题切换） ========== */
+        :root {
+            --bg-body: #f5f7fa;
+            --bg-card: #ffffff;
+            --bg-input: #f1f4f9;
+            --bg-hover: #eef2f6;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-light: #e9edf4;
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --color-accent: #3b82f6;
+            --color-accent-hover: #2563eb;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --radius-card: 20px;
+            --radius-btn: 40px;
+            --transition: 0.25s ease;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --bg-hover: #2d3a4f;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-light: #334155;
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --color-accent: #60a5fa;
+            --color-accent-hover: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-body);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        .app { max-width: 1280px; margin: 0 auto; }
+
+        /* ---------- 顶部导航 ---------- */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
+            transition: border-color var(--transition);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 {
+            font-weight: 500;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left i {
+            font-size: 28px;
+            color: var(--color-accent);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-right .clock {
+            font-size: 18px;
+            font-weight: 400;
+            background: var(--bg-input);
+            padding: 6px 16px;
+            border-radius: var(--radius-btn);
+            transition: background var(--transition);
+        }
+
+        .theme-toggle {
+            background: var(--bg-input);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: background var(--transition), transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            transform: scale(1.05);
+        }
+
+        .logout-btn {
+            background: var(--bg-input);
+            border: none;
+            border-radius: var(--radius-btn);
+            padding: 6px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logout-btn:hover {
+            background: var(--color-danger);
+            color: #fff;
+        }
+
+        /* ---------- 统计卡片 ---------- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-card);
+            padding: 18px 20px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.12); color: var(--color-accent); }
+        .stat-icon.green { background: rgba(34, 197, 94, 0.12); color: var(--color-success); }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.12); color: var(--color-warning); }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+        .stat-icon.teal { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
+
+        .stat-info .stat-number {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .stat-info .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ---------- 主内容网格 ---------- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-card);
+            padding: 20px 22px 24px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-card-hover);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 18px;
+            color: var(--text-secondary);
+        }
+
+        .card-title i {
+            color: var(--color-accent);
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* ---------- 搜索 ---------- */
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--bg-input);
+            border-radius: var(--radius-btn);
+            padding: 0 18px;
+            transition: background var(--transition);
+        }
+
+        .search-box:focus-within {
+            background: var(--bg-hover);
+        }
+
+        .search-box i { color: var(--text-muted); }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            padding: 12px 12px 12px 8px;
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+
+        .search-box input::placeholder { color: var(--text-muted); }
+
+        /* ---------- 待办 ---------- */
+        .todo-list {
+            list-style: none;
+            margin-top: 4px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 15px;
+            transition: border-color var(--transition);
+        }
+
+        .todo-item:last-child { border-bottom: none; }
+
+        .todo-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            background: transparent;
+            display: inline-block;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .todo-check.done {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .todo-check.done::after {
+            content: "✓";
+            color: #fff;
+            font-size: 13px;
+            position: absolute;
+            top: -1px;
+            left: 2px;
+        }
+
+        .todo-text {
+            flex: 1;
+            word-break: break-word;
+            transition: color var(--transition);
+        }
+
+        .todo-text.done-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .todo-del {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+
+        .todo-del:hover { color: var(--color-danger); }
+
+        .add-todo {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .add-todo input {
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-btn);
+            padding: 8px 16px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: all var(--transition);
+        }
+
+        .add-todo input:focus {
+            border-color: var(--color-accent);
+            background: var(--bg-card);
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-btn);
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-btn);
+            padding: 6px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+        }
+
+        /* ---------- 便签 ---------- */
+        .note-area textarea {
+            width: 100%;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: all var(--transition);
+            line-height: 1.6;
+        }
+
+        .note-area textarea:focus {
+            border-color: var(--color-accent);
+            background: var(--bg-card);
+        }
+
+        .note-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* ---------- 快捷链接 ---------- */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .link-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 0;
+            border-radius: 16px;
+            background: var(--bg-input);
+            transition: all var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            border: 1px solid transparent;
+        }
+
+        .link-item:hover {
+            background: var(--bg-hover);
+            transform: scale(1.04);
+            border-color: var(--border-light);
+        }
+
+        .link-item i {
+            font-size: 24px;
+            color: var(--color-accent);
+            margin-bottom: 2px;
+        }
+
+        .link-item span {
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .add-link {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .add-link input {
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-btn);
+            padding: 8px 16px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: all var(--transition);
+            min-width: 80px;
+        }
+
+        .add-link input:focus {
+            border-color: var(--color-accent);
+            background: var(--bg-card);
+        }
+
+        /* ---------- 数据表格 ---------- */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 4px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border-light);
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .data-table th {
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .data-table th .col-name {
+            display: inline-block;
+            min-width: 50px;
+            outline: none;
+            border-bottom: 1px dashed transparent;
+            transition: border-color 0.2s;
+        }
+
+        .data-table th .col-name:focus {
+            border-bottom-color: var(--color-accent);
+        }
+
+        .data-table td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            padding: 4px 2px;
+            outline: none;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .data-table td input:focus {
+            background: var(--bg-input);
+        }
+
+        .data-table .row-delete {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+        }
+
+        .data-table .row-delete:hover {
+            color: var(--color-danger);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        /* ---------- 加载遮罩 ---------- */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            background: var(--bg-card);
+            padding: 30px 40px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-card-hover);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-light);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-spinner span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* ---------- FAB ---------- */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            color: #fff;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            transform: scale(1.08) rotate(90deg);
+            background: var(--color-accent-hover);
+            box-shadow: 0 8px 28px rgba(59, 130, 246, 0.5);
+        }
+
+        .fab-menu {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 99;
+        }
+
+        .fab-menu.open {
+            display: flex;
+        }
+
+        .fab-menu .fab-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 40px;
+            padding: 10px 18px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            box-shadow: var(--shadow-card);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .fab-menu .fab-item:hover {
+            background: var(--bg-hover);
+            transform: translateX(-4px);
+        }
+
+        .fab-menu .fab-item i {
+            color: var(--color-accent);
+            font-size: 16px;
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .header-right {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .stat-card { padding: 14px 16px; }
+            .grid { grid-template-columns: 1fr; gap: 16px; }
+            .fab {
+                bottom: 20px;
+                right: 20px;
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+            .fab-menu {
+                bottom: 80px;
+                right: 20px;
+            }
+        }
+
+        .empty-hint {
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 8px 0;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>加载中...</span>
+        </div>
+    </div>
+
+    <div class="app">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <div class="header-left">
+                <i class="fas fa-th-large"></i>
+                <h1>工作台 Pro</h1>
+            </div>
+            <div class="header-right">
+                <div class="clock" id="clockDisplay">--:--:--</div>
+                <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            </div>
+        </header>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-tasks"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statTotal">0</div>
+                    <div class="stat-label">总待办</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statDone">0</div>
+                    <div class="stat-label">已完成</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-sticky-note"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statNotes">0</div>
+                    <div class="stat-label">便签数</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fas fa-link"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statLinks">0</div>
+                    <div class="stat-label">快捷链接</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon teal"><i class="fas fa-table"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statRows">0</div>
+                    <div class="stat-label">表格行数</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容网格 -->
+        <div class="grid">
+            <!-- 搜索卡片 -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-search"></i> 快速搜索</div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="输入关键词，回车搜索..." />
+                </div>
+                <div style="margin-top:12px; font-size:13px; color:var(--text-muted);">
+                    <i class="fas fa-arrow-right"></i> 使用百度搜索
+                </div>
+            </div>
+
+            <!-- 待办卡片 -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-check-circle"></i> 待办清单</div>
+                <ul class="todo-list" id="todoList"></ul>
+                <div class="add-todo">
+                    <input type="text" id="todoInput" placeholder="添加待办..." />
+                    <button class="btn-primary" id="addTodoBtn">添加</button>
+                </div>
+            </div>
+
+            <!-- 便签卡片 -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-sticky-note"></i> 便签</div>
+                <div class="note-area">
+                    <textarea id="noteContent" placeholder="写下你的想法..."></textarea>
+                    <div class="note-hint"><i class="far fa-save"></i> 自动保存</div>
+                </div>
+            </div>
+
+            <!-- 快捷链接卡片 -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-link"></i> 快捷链接</div>
+                <div class="links-grid" id="linksGrid"></div>
+                <div class="add-link">
+                    <input type="text" id="linkName" placeholder="名称" />
+                    <input type="text" id="linkUrl" placeholder="网址 (https://...)" />
+                    <button class="btn-primary" id="addLinkBtn">添加</button>
+                </div>
+            </div>
+
+            <!-- 数据表格卡片 -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-table"></i> 数据表格</div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th data-col="0"><span class="col-name">任务名称</span></th>
+                                <th data-col="1"><span class="col-name">负责人</span></th>
+                                <th data-col="2"><span class="col-name">状态</span></th>
+                                <th style="width:40px; text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-actions">
+                    <button class="btn-primary" id="addRowBtn"><i class="fas fa-plus"></i> 添加行</button>
+                    <button class="btn-outline" id="clearTableBtn"><i class="fas fa-trash-alt"></i> 清空</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" id="fabToggle" aria-label="快捷操作">
+        <i class="fas fa-plus"></i>
+    </button>
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-item" data-action="todo"><i class="fas fa-check-circle"></i> 新建待办</div>
+        <div class="fab-item" data-action="note"><i class="fas fa-sticky-note"></i> 新建笔记</div>
+        <div class="fab-item" data-action="link"><i class="fas fa-link"></i> 添加链接</div>
+        <div class="fab-item" data-action="table"><i class="fas fa-table"></i> 添加表格行</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // Supabase 配置（已替换为你项目的信息）
+            // ================================================================
+            const SUPABASE_URL = 'https://oidrtpdaplsnctxkeml.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_mMVkOepMV1Nydv-QJSknqA_f_vq18yGS';
+            // ================================================================
+
+            // 检查 supabase 是否加载
+            if (typeof window.supabase === 'undefined') {
+                document.body.innerHTML = '<div style="text-align:center;padding:100px 20px;font-size:18px;color:#ef4444;">⚠️ 加载 Supabase SDK 失败，请检查网络连接后刷新页面重试。</div>';
+                return;
+            }
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // ---------- 获取访问密钥 ----------
+            const accessKey = localStorage.getItem('workbench_access_key');
+            if (!accessKey) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // ---------- 数据管理 ----------
+            const DEFAULT_COLS = ['任务名称', '负责人', '状态'];
+
+            function getDefaultData() {
+                return {
+                    todos: [
+                        { text: '完成项目报告', done: false },
+                        { text: '阅读 30 分钟', done: false },
+                        { text: '整理桌面', done: true }
+                    ],
+                    note: '极简设计 → 减少认知负荷\n明日会议 10:00',
+                    links: [
+                        { name: 'GitHub', url: 'https://github.com' },
+                        { name: 'Gmail', url: 'https://mail.google.com' },
+                        { name: 'Docs', url: 'https://docs.google.com' }
+                    ],
+                    table: {
+                        cols: [...DEFAULT_COLS],
+                        rows: [
+                            ['设计原型', '张三', '进行中'],
+                            ['开发登录', '李四', '已完成']
+                        ]
+                    }
+                };
+            }
+
+            let appData = null;
+            let isSaving = false;
+            let saveQueue = [];
+
+            // DOM 引用
+            const todoListEl = document.getElementById('todoList');
+            const todoInput = document.getElementById('todoInput');
+            const addTodoBtn = document.getElementById('addTodoBtn');
+            const noteArea = document.getElementById('noteContent');
+            const linksGrid = document.getElementById('linksGrid');
+            const linkName = document.getElementById('linkName');
+            const linkUrl = document.getElementById('linkUrl');
+            const addLinkBtn = document.getElementById('addLinkBtn');
+            const searchInput = document.getElementById('searchInput');
+
+            const statTotal = document.getElementById('statTotal');
+            const statDone = document.getElementById('statDone');
+            const statNotes = document.getElementById('statNotes');
+            const statLinks = document.getElementById('statLinks');
+            const statRows = document.getElementById('statRows');
+
+            const themeToggle = document.getElementById('themeToggle');
+            const fabToggle = document.getElementById('fabToggle');
+            const fabMenu = document.getElementById('fabMenu');
+
+            const tableBody = document.getElementById('tableBody');
+            const addRowBtn = document.getElementById('addRowBtn');
+            const clearTableBtn = document.getElementById('clearTableBtn');
+            const tableHeaders = document.querySelectorAll('#dataTable thead th .col-name');
+
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            // ---------- 辅助函数 ----------
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function showLoading(show) {
+                loadingOverlay.classList.toggle('active', show);
+            }
+
+            // ---------- 云端数据读写 ----------
+            async function loadDataFromCloud() {
+                showLoading(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('workbench_data')
+                        .select('*')
+                        .eq('access_key', accessKey)
+                        .single();
+
+                    if (error && error.code === 'PGRST116') {
+                        // 未找到，创建默认数据
+                        const defaultData = getDefaultData();
+                        const { error: insertError } = await supabase
+                            .from('workbench_data')
+                            .insert({
+                                access_key: accessKey,
+                                todos: defaultData.todos,
+                                note: defaultData.note,
+                                links: defaultData.links,
+                                table_data: defaultData.table
+                            });
+                        if (insertError) {
+                            console.error('创建记录失败', insertError);
+                            showLoading(false);
+                            return getDefaultData();
+                        }
+                        showLoading(false);
+                        return defaultData;
+                    }
+
+                    if (error) {
+                        console.error('加载数据失败', error);
+                        showLoading(false);
+                        return getDefaultData();
+                    }
+
+                    showLoading(false);
+                    return {
+                        todos: data.todos || [],
+                        note: data.note || '',
+                        links: data.links || [],
+                        table: data.table_data || { cols: [...DEFAULT_COLS], rows: [] }
+                    };
+                } catch (err) {
+                    console.error('加载数据异常', err);
+                    showLoading(false);
+                    return getDefaultData();
+                }
+            }
+
+            async function saveDataToCloud(data, showLoad = false) {
+                if (isSaving) {
+                    saveQueue.push(data);
+                    return;
+                }
+                isSaving = true;
+                if (showLoad) showLoading(true);
+
+                try {
+                    const payload = {
+                        todos: data.todos,
+                        note: data.note,
+                        links: data.links,
+                        table_data: data.table,
+                        updated_at: new Date().toISOString()
+                    };
+                    const { error } = await supabase
+                        .from('workbench_data')
+                        .update(payload)
+                        .eq('access_key', accessKey);
+
+                    if (error) {
+                        console.error('保存失败', error);
+                    }
+                } catch (err) {
+                    console.error('保存异常', err);
+                } finally {
+                    isSaving = false;
+                    if (showLoad) showLoading(false);
+                    if (saveQueue.length > 0) {
+                        const nextData = saveQueue.pop();
+                        await saveDataToCloud(nextData);
+                    }
+                }
+            }
+
+            // ---------- 更新统计 ----------
+            function updateStats() {
+                if (!appData) return;
+                const total = appData.todos.length;
+                const done = appData.todos.filter(t => t.done).length;
+                const notes = appData.note ? appData.note.split('\n').filter(l => l.trim()).length : 0;
+                const links = appData.links.length;
+                const rows = appData.table.rows.length;
+                statTotal.textContent = total;
+                statDone.textContent = done;
+                statNotes.textContent = notes;
+                statLinks.textContent = links;
+                statRows.textContent = rows;
+            }
+
+            // ---------- 渲染函数 ----------
+            function renderTodos() {
+                if (!appData) return;
+                if (appData.todos.length === 0) {
+                    todoListEl.innerHTML =
+                        `<li class="empty-hint"><i class="far fa-smile"></i> 暂无待办，添加一条吧</li>`;
+                    return;
+                }
+                let html = '';
+                appData.todos.forEach((todo, index) => {
+                    const doneClass = todo.done ? 'done' : '';
+                    const textClass = todo.done ? 'done-text' : '';
+                    html += `
+                        <li class="todo-item" data-index="${index}">
+                            <span class="todo-check ${doneClass}" data-action="toggle"></span>
+                            <span class="todo-text ${textClass}">${escapeHtml(todo.text)}</span>
+                            <span class="todo-del" data-action="delete"><i class="fas fa-times"></i></span>
+                        </li>
+                    `;
+                });
+                todoListEl.innerHTML = html;
+            }
+
+            function renderLinks() {
+                if (!appData) return;
+                if (appData.links.length === 0) {
+                    linksGrid.innerHTML =
+                        `<div class="empty-hint" style="grid-column:1/-1;"><i class="far fa-plus-square"></i> 添加常用链接</div>`;
+                    return;
+                }
+                let html = '';
+                appData.links.forEach((link) => {
+                    let icon = 'fa-globe';
+                    try {
+                        const url = new URL(link.url);
+                        const host = url.hostname.toLowerCase();
+                        if (host.includes('github')) icon = 'fa-github';
+                        else if (host.includes('google')) icon = 'fa-google';
+                        else if (host.includes('twitter') || host.includes('x.com')) icon = 'fa-twitter';
+                        else if (host.includes('youtube')) icon = 'fa-youtube';
+                        else if (host.includes('zhihu')) icon = 'fa-zhihu';
+                        else if (host.includes('bilibili')) icon = 'fa-bilibili';
+                    } catch (e) { /* ignore */ }
+                    html += `
+                        <a href="${escapeHtml(link.url)}" target="_blank" class="link-item">
+                            <i class="fab ${icon}"></i>
+                            <span>${escapeHtml(link.name)}</span>
+                        </a>
+                    `;
+                });
+                linksGrid.innerHTML = html;
+            }
+
+            function renderTable() {
+                if (!appData) return;
+                const cols = appData.table.cols;
+                const rows = appData.table.rows;
+                tableHeaders.forEach((span, idx) => {
+                    if (idx < cols.length) {
+                        span.textContent = cols[idx];
+                    }
+                });
+                if (rows.length === 0) {
+                    tableBody.innerHTML =
+                        `<tr><td colspan="${cols.length + 1}" class="empty-hint" style="text-align:center; padding:20px 0;">暂无数据，点击"添加行"</td></tr>`;
+                    return;
+                }
+                let html = '';
+                rows.forEach((row, rowIndex) => {
+                    html += `<tr data-row="${rowIndex}">`;
+                    for (let c = 0; c < cols.length; c++) {
+                        const val = (row && row[c] !== undefined) ? row[c] : '';
+                        html += `<td><input type="text" class="cell-input" data-row="${rowIndex}" data-col="${c}" value="${escapeHtml(val)}" /></td>`;
+                    }
+                    html += `<td style="text-align:center;"><button class="row-delete" data-row="${rowIndex}"><i class="fas fa-times"></i></button></td>`;
+                    html += `</tr>`;
+                });
+                tableBody.innerHTML = html;
+
+                tableBody.querySelectorAll('.cell-input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        const r = parseInt(this.dataset.row);
+                        const c = parseInt(this.dataset.col);
+                        if (!isNaN(r) && !isNaN(c) && r < appData.table.rows.length) {
+                            appData.table.rows[r][c] = this.value;
+                            saveDataToCloud(appData);
+                            updateStats();
+                        }
+                    });
+                });
+
+                tableBody.querySelectorAll('.row-delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const r = parseInt(this.dataset.row);
+                        if (!isNaN(r) && r < appData.table.rows.length) {
+                            appData.table.rows.splice(r, 1);
+                            saveDataToCloud(appData);
+                            renderTable();
+                            updateStats();
+                        }
+                    });
+                });
+                updateStats();
+            }
+
+            // ---------- 表头编辑 ----------
+            tableHeaders.forEach((span, idx) => {
+                span.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const current = this.textContent;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = current;
+                    input.className = 'col-name-input';
+                    input.style.cssText =
+                        'border:1px solid var(--color-accent); background:var(--bg-card); border-radius:4px; padding:2px 4px; font-size:14px; font-family:inherit; color:var(--text-primary); width:100%;';
+                    this.textContent = '';
+                    this.appendChild(input);
+                    input.focus();
+                    input.select();
+
+                    const finish = () => {
+                        const newVal = input.value.trim() || current;
+                        appData.table.cols[idx] = newVal;
+                        this.textContent = newVal;
+                        saveDataToCloud(appData);
+                    };
+
+                    input.addEventListener('blur', finish);
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            this.blur();
+                        }
+                        if (e.key === 'Escape') {
+                            this.value = current;
+                            this.blur();
+                        }
+                    });
+                });
+            });
+
+            // ---------- 表格操作 ----------
+            function addTableRow() {
+                if (!appData) return;
+                const cols = appData.table.cols;
+                const newRow = cols.map(() => '');
+                appData.table.rows.push(newRow);
+                saveDataToCloud(appData);
+                renderTable();
+                updateStats();
+                fabMenu.classList.remove('open');
+            }
+
+            function clearTable() {
+                if (!appData || appData.table.rows.length === 0) return;
+                if (confirm('确定要清空所有表格数据吗？')) {
+                    appData.table.rows = [];
+                    saveDataToCloud(appData);
+                    renderTable();
+                    updateStats();
+                }
+            }
+
+            addRowBtn.addEventListener('click', addTableRow);
+            clearTableBtn.addEventListener('click', clearTable);
+
+            // ---------- 待办事件 ----------
+            todoListEl.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-action]');
+                if (!target || !appData) return;
+                const li = target.closest('.todo-item');
+                if (!li) return;
+                const index = parseInt(li.dataset.index, 10);
+                if (isNaN(index) || index < 0 || index >= appData.todos.length) return;
+
+                const action = target.dataset.action;
+                if (action === 'toggle') {
+                    appData.todos[index].done = !appData.todos[index].done;
+                    saveDataToCloud(appData);
+                    renderTodos();
+                    updateStats();
+                } else if (action === 'delete') {
+                    appData.todos.splice(index, 1);
+                    saveDataToCloud(appData);
+                    renderTodos();
+                    updateStats();
+                }
+            });
+
+            function addTodo() {
+                const text = todoInput.value.trim();
+                if (text === '' || !appData) return;
+                appData.todos.push({ text, done: false });
+                todoInput.value = '';
+                saveDataToCloud(appData);
+                renderTodos();
+                updateStats();
+                fabMenu.classList.remove('open');
+            }
+
+            addTodoBtn.addEventListener('click', addTodo);
+            todoInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') addTodo();
+            });
+
+            // ---------- 便签 ----------
+            noteArea.addEventListener('input', function() {
+                if (!appData) return;
+                appData.note = noteArea.value;
+                saveDataToCloud(appData);
+                updateStats();
+            });
+
+            // ---------- 链接 ----------
+            function addLink() {
+                const name = linkName.value.trim();
+                const url = linkUrl.value.trim();
+                if (name === '' || url === '' || !appData) return;
+                let finalUrl = url;
+                if (!/^https?:\/\//i.test(url)) {
+                    finalUrl = 'https://' + url;
+                }
+                appData.links.push({ name, url: finalUrl });
+                linkName.value = '';
+                linkUrl.value = '';
+                saveDataToCloud(appData);
+                renderLinks();
+                updateStats();
+                fabMenu.classList.remove('open');
+            }
+
+            addLinkBtn.addEventListener('click', addLink);
+            linkUrl.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') addLink();
+            });
+            linkName.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') addLink();
+            });
+
+            // ---------- 搜索 ----------
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const query = searchInput.value.trim();
+                    if (query === '') return;
+                    window.open('https://www.baidu.com/s?wd=' + encodeURIComponent(query), '_blank');
+                    searchInput.value = '';
+                }
+            });
+
+            // ---------- 时钟 ----------
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('clockDisplay').textContent = `${h}:${m}:${s}`;
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // ---------- 主题 ----------
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute('data-bs-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', next);
+                const icon = themeToggle.querySelector('i');
+                if (next === 'dark') {
+                    icon.className = 'fas fa-sun';
+                } else {
+                    icon.className = 'fas fa-moon';
+                }
+                localStorage.setItem('workbench_theme', next);
+            }
+
+            const savedTheme = localStorage.getItem('workbench_theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-bs-theme', savedTheme);
+                const icon = themeToggle.querySelector('i');
+                if (savedTheme === 'dark') {
+                    icon.className = 'fas fa-sun';
+                } else {
+                    icon.className = 'fas fa-moon';
+                }
+            }
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // ---------- FAB ----------
+            fabToggle.addEventListener('click', function() {
+                fabMenu.classList.toggle('open');
+            });
+
+            fabMenu.addEventListener('click', function(e) {
+                const item = e.target.closest('.fab-item');
+                if (!item) return;
+                const action = item.dataset.action;
+                if (action === 'todo') {
+                    todoInput.focus();
+                    fabMenu.classList.remove('open');
+                } else if (action === 'note') {
+                    noteArea.focus();
+                    fabMenu.classList.remove('open');
+                } else if (action === 'link') {
+                    linkName.focus();
+                    fabMenu.classList.remove('open');
+                } else if (action === 'table') {
+                    addTableRow();
+                    fabMenu.classList.remove('open');
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.fab') && !e.target.closest('.fab-menu')) {
+                    fabMenu.classList.remove('open');
+                }
+            });
+
+            // ---------- 快捷键 ----------
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+                if (e.key === 'Escape') {
+                    fabMenu.classList.remove('open');
+                }
+            });
+
+            // ---------- 退出登录 ----------
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (confirm('确定要退出吗？')) {
+                    localStorage.removeItem('workbench_access_key');
+                    window.location.href = 'index.html';
+                }
+            });
+
+            // ---------- 初始化 ----------
+            async function init() {
+                appData = await loadDataFromCloud();
+                if (!appData) {
+                    appData = getDefaultData();
+                }
+                noteArea.value = appData.note;
+                renderTodos();
+                renderLinks();
+                renderTable();
+                updateStats();
+                console.log('✅ 工作台已加载，访问密钥:', accessKey);
+            }
+
+            init();
+
+            window.addEventListener('beforeunload', function() {
+                if (appData) {
+                    appData.note = noteArea.value;
+                    saveDataToCloud(appData);
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
