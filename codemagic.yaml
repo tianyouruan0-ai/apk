@@ -1,155 +1,96 @@
 workflows:
-  android-webview:
-    name: Android WebView APK
+  android-build:
+    name: Build Android APK
     max_build_duration: 60
-    instance_type: mac_mini
+    instance_type: linux
     environment:
       vars:
-        PACKAGE_NAME: "com.yourcompany.workbench"
         APP_NAME: "极简工作台 Pro"
     scripts:
-      - name: 创建 Android 项目结构
+      - name: 准备项目
         script: |
-          mkdir -p android/app/src/main/assets
-          mkdir -p android/app/src/main/java/com/yourcompany/workbench
-          mkdir -p android/app/src/main/res/layout
-          mkdir -p android/app/src/main/res/values
+          mkdir -p app/src/main/assets
+          cp index.html app/src/main/assets/
           
-          # 复制你的 HTML 到 assets 目录
-          cp index.html android/app/src/main/assets/
-          
-          # 创建 AndroidManifest.xml
-          cat > android/app/src/main/AndroidManifest.xml << 'EOF'
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.yourcompany.workbench">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="极简工作台 Pro"
-                  android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-                  android:usesCleartextTraffic="true">
+              package="com.example.workbench">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application android:label="极简工作台 Pro" android:theme="@style/Theme.AppCompat.Light.NoActionBar" android:usesCleartextTraffic="true">
                   <activity android:name=".MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
+                      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
                   </activity>
               </application>
           </manifest>
           EOF
           
-          # 创建 MainActivity.java
-          cat > android/app/src/main/java/com/yourcompany/workbench/MainActivity.java << 'EOF'
-          package com.yourcompany.workbench;
+          cat > app/src/main/java/com/example/workbench/MainActivity.java << 'EOF'
+          package com.example.workbench;
           import android.os.Bundle;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.webkit.WebSettings;
           import androidx.appcompat.app.AppCompatActivity;
           public class MainActivity extends AppCompatActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
+              @Override protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   setContentView(R.layout.activity_main);
                   WebView webView = findViewById(R.id.webview);
-                  WebSettings webSettings = webView.getSettings();
-                  webSettings.setJavaScriptEnabled(true);
-                  webSettings.setDomStorageEnabled(true);
+                  WebSettings ws = webView.getSettings();
+                  ws.setJavaScriptEnabled(true);
+                  ws.setDomStorageEnabled(true);
                   webView.setWebViewClient(new WebViewClient());
                   webView.loadUrl("file:///android_asset/index.html");
               }
           }
           EOF
           
-          # 创建 activity_main.xml
-          cat > android/app/src/main/res/layout/activity_main.xml << 'EOF'
+          cat > app/src/main/res/layout/activity_main.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <WebView xmlns:android="http://schemas.android.com/apk/res/android"
               android:id="@+id/webview"
               android:layout_width="match_parent"
-              android:layout_height="match_parent" />
+              android:layout_height="match_parent"/>
           EOF
           
-          # 创建 build.gradle
-          cat > android/app/build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application'
-          }
+          cat > app/build.gradle << 'EOF'
+          plugins { id 'com.android.application' }
           android {
-              namespace 'com.yourcompany.workbench'
+              namespace 'com.example.workbench'
               compileSdk 33
-              defaultConfig {
-                  applicationId "com.yourcompany.workbench"
-                  minSdk 21
-                  targetSdk 33
-                  versionCode 1
-                  versionName "1.0"
-              }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
+              defaultConfig { applicationId "com.example.workbench"; minSdk 21; targetSdk 33; versionCode 1; versionName "1.0" }
+              buildTypes { release { minifyEnabled false } }
           }
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-          }
+          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1' }
           EOF
           
-          # 创建 settings.gradle
-          cat > android/settings.gradle << 'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "WorkbenchApp"
-          include ':app'
+          cat > settings.gradle << 'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          rootProject.name = "WorkbenchApp"; include ':app'
           EOF
           
-          # 创建根 build.gradle
-          cat > android/build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application' version '7.4.2' apply false
-          }
-          task clean(type: Delete) {
-              delete rootProject.buildDir
-          }
+          cat > build.gradle << 'EOF'
+          plugins { id 'com.android.application' version '7.4.2' apply false }
+          task clean(type: Delete) { delete rootProject.buildDir }
           EOF
           
-          # 添加 gradle wrapper（Codemagic 需要）
-          mkdir -p android/gradle/wrapper
-          curl -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.4.2/gradle/wrapper/gradle-wrapper.jar
-          cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOF'
+          mkdir -p gradle/wrapper
+          curl -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.4.2/gradle/wrapper/gradle-wrapper.jar
+          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
           distributionUrl=https\://services.gradle.org/distributions/gradle-7.4.2-bin.zip
           zipStoreBase=GRADLE_USER_HOME
           zipStorePath=wrapper/dists
           EOF
-          
-          # 创建 gradlew 脚本
-          cat > android/gradlew << 'EOF'
-          #!/bin/sh
-          exec java -cp "\$0"./gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "\$@"
-          EOF
-          chmod +x android/gradlew
+          echo '#!/bin/sh' > gradlew
+          echo 'exec java -cp "\$0"./gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "\$@"' >> gradlew
+          chmod +x gradlew
 
       - name: 构建 APK
-        script: |
-          cd android
-          ./gradlew assembleRelease
-          
+        script: ./gradlew assembleRelease
+
     artifacts:
-      - android/app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/release/*.apk
