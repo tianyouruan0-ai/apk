@@ -1,8 +1,8 @@
 workflows:
-  android-webview:   # ← 名称改为 android-webview，与 Codemagic 期望一致
+  android-webview:
     name: Build Android APK
     max_build_duration: 60
-    instance_type: linux
+    # instance_type 不指定，使用默认
     environment:
       vars:
         APP_NAME: "极简工作台 Pro"
