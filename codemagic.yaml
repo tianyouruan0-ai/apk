@@ -2,7 +2,7 @@ workflows:
   android-webview:
     name: Build Android APK
     max_build_duration: 60
-    # instance_type 不指定，使用默认
+    instance_type: linux
     environment:
       vars:
         APP_NAME: "极简工作台 Pro"
@@ -75,22 +75,11 @@ workflows:
           plugins { id 'com.android.application' version '7.4.2' apply false }
           task clean(type: Delete) { delete rootProject.buildDir }
           EOF
-          
-          mkdir -p gradle/wrapper
-          curl -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.4.2/gradle/wrapper/gradle-wrapper.jar
-          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-7.4.2-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-          echo '#!/bin/sh' > gradlew
-          echo 'exec java -cp "\$0"./gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "\$@"' >> gradlew
-          chmod +x gradlew
 
       - name: 构建 APK
-        script: ./gradlew assembleRelease
+        script: |
+          # 使用系统 Gradle（不用 wrapper）
+          gradle assembleRelease
 
     artifacts:
       - app/build/outputs/apk/release/*.apk
