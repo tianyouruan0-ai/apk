@@ -1,5 +1,5 @@
 workflows:
-  android-build:
+  android-webview:   # ← 名称改为 android-webview，与 Codemagic 期望一致
     name: Build Android APK
     max_build_duration: 60
     instance_type: linux
